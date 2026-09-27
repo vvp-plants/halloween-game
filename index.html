@@ -1,0 +1,358 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Halloween Ghost Hunt</title>
+<style>
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    background: #05030a;
+    color: white;
+  }
+
+  #game {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+    cursor: crosshair;
+    background:
+      radial-gradient(circle at 50% 30%, #25113d 0%, #0c0715 45%, #020205 100%);
+  }
+
+  .moon {
+    position: absolute;
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: #eee6c8;
+    right: 10%;
+    top: 8%;
+    box-shadow: 0 0 45px #eee6c8;
+  }
+
+  .tree {
+    position: absolute;
+    bottom: 0;
+    width: 170px;
+    height: 70%;
+    background: #050509;
+    clip-path: polygon(
+      45% 100%, 55% 100%, 58% 55%,
+      90% 40%, 62% 43%, 88% 20%,
+      57% 35%, 70% 0%, 50% 28%,
+      30% 4%, 42% 36%, 8% 20%,
+      38% 45%, 10% 40%, 42% 56%
+    );
+  }
+
+  .tree.one { left: 0; }
+  .tree.two { right: 0; transform: scaleX(-1); }
+
+  #hud {
+    position: absolute;
+    z-index: 10;
+    top: 20px;
+    left: 20px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    background: rgba(0,0,0,.55);
+    border: 1px solid #7c35b8;
+    box-shadow: 0 0 20px rgba(124,53,184,.4);
+    font-size: 20px;
+  }
+
+  #message {
+    position: absolute;
+    z-index: 20;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  #messageBox {
+    background: rgba(0,0,0,.8);
+    border: 2px solid #8d43c7;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 0 50px #5c188b;
+  }
+
+  h1 {
+    color: #ff7518;
+    text-shadow: 0 0 15px #ff4500;
+  }
+
+  button {
+    padding: 12px 24px;
+    border: 0;
+    border-radius: 10px;
+    background: #ff7518;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #ff943d;
+  }
+
+  .ghost {
+    position: absolute;
+    width: 80px;
+    height: 105px;
+    cursor: pointer;
+    animation: float 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(255,255,255,.35));
+    z-index: 5;
+  }
+
+  .ghostBody {
+    position: absolute;
+    width: 70px;
+    height: 85px;
+    left: 5px;
+    top: 5px;
+    background: rgba(240,240,255,.9);
+    border-radius: 50% 50% 25% 25%;
+  }
+
+  .ghostBody:after {
+    content: "";
+    position: absolute;
+    bottom: -18px;
+    left: 0;
+    width: 70px;
+    height: 25px;
+    background: rgba(240,240,255,.9);
+    clip-path: polygon(
+      0 0, 20% 60%, 40% 0, 60% 60%,
+      80% 0, 100% 60%, 100% 100%, 0 100%
+    );
+  }
+
+  .eye {
+    position: absolute;
+    width: 12px;
+    height: 20px;
+    background: #09020d;
+    border-radius: 50%;
+    top: 30px;
+    z-index: 2;
+  }
+
+  .eye.left { left: 20px; }
+  .eye.right { right: 20px; }
+
+  .mouth {
+    position: absolute;
+    width: 18px;
+    height: 25px;
+    border-radius: 50%;
+    background: #09020d;
+    left: 26px;
+    top: 55px;
+    z-index: 2;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-18px) rotate(2deg); }
+  }
+
+  .hit {
+    animation: hit .25s forwards !important;
+  }
+
+  @keyframes hit {
+    to {
+      transform: scale(2) rotate(20deg);
+      opacity: 0;
+    }
+  }
+
+  .pumpkin {
+    position: absolute;
+    bottom: 15px;
+    width: 75px;
+    height: 55px;
+    background: #e85d04;
+    border-radius: 50%;
+    box-shadow: inset -12px 0 #b53e00;
+  }
+
+  .pumpkin:before {
+    content: "🎃";
+    position: absolute;
+    font-size: 62px;
+    top: -5px;
+  }
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div class="moon"></div>
+
+  <div class="tree one"></div>
+  <div class="tree two"></div>
+
+  <div class="pumpkin" style="left:18%"></div>
+  <div class="pumpkin" style="right:20%"></div>
+
+  <div id="hud">
+    👻 Ghosts caught: <span id="score">0</span>
+    &nbsp; | &nbsp;
+    ❤️ Lives: <span id="lives">3</span>
+    &nbsp; | &nbsp;
+    ⏱️ <span id="time">30</span>
+  </div>
+
+  <div id="message">
+    <div id="messageBox">
+      <h1>🎃 GHOST HUNT 🎃</h1>
+      <p>Catch as many ghosts as you can!</p>
+      <p>But be quick... they disappear after 30 seconds.</p>
+      <button onclick="startGame()">START GAME</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let score = 0;
+let lives = 3;
+let time = 30;
+let gameRunning = false;
+let timer;
+let spawnTimer;
+
+const game = document.getElementById("game");
+const scoreEl = document.getElementById("score");
+const livesEl = document.getElementById("lives");
+const timeEl = document.getElementById("time");
+const message = document.getElementById("message");
+
+function startGame() {
+  score = 0;
+  lives = 3;
+  time = 30;
+  gameRunning = true;
+
+  scoreEl.textContent = score;
+  livesEl.textContent = lives;
+  timeEl.textContent = time;
+
+  message.style.display = "none";
+
+  document.querySelectorAll(".ghost").forEach(g => g.remove());
+
+  clearInterval(timer);
+  clearInterval(spawnTimer);
+
+  timer = setInterval(() => {
+    time--;
+    timeEl.textContent = time;
+
+    if (time <= 0) {
+      endGame();
+    }
+  }, 1000);
+
+  spawnGhost();
+  spawnTimer = setInterval(spawnGhost, 900);
+}
+
+function spawnGhost() {
+  if (!gameRunning) return;
+
+  const ghost = document.createElement("div");
+  ghost.className = "ghost";
+
+  ghost.innerHTML = `
+    <div class="ghostBody">
+      <div class="eye left"></div>
+      <div class="eye right"></div>
+      <div class="mouth"></div>
+    </div>
+  `;
+
+  const maxX = window.innerWidth - 100;
+  const maxY = window.innerHeight - 150;
+
+  ghost.style.left = Math.random() * maxX + "px";
+  ghost.style.top = 90 + Math.random() * (maxY - 90) + "px";
+
+  ghost.onclick = function(e) {
+    e.stopPropagation();
+
+    if (!gameRunning) return;
+
+    score++;
+    scoreEl.textContent = score;
+
+    ghost.classList.add("hit");
+
+    setTimeout(() => ghost.remove(), 250);
+  };
+
+  game.appendChild(ghost);
+
+  setTimeout(() => {
+    if (ghost.parentElement) {
+      ghost.remove();
+      if (gameRunning) {
+        lives--;
+        livesEl.textContent = lives;
+
+        if (lives <= 0) {
+          endGame();
+        }
+      }
+    }
+  }, 3000 + Math.random() * 2000);
+}
+
+function endGame() {
+  gameRunning = false;
+
+  clearInterval(timer);
+  clearInterval(spawnTimer);
+
+  document.querySelectorAll(".ghost").forEach(g => g.remove());
+
+  message.style.display = "flex";
+
+  document.getElementById("messageBox").innerHTML = `
+    <h1>💀 GAME OVER 💀</h1>
+    <p>You caught <strong>${score}</strong> ghosts!</p>
+    <button onclick="startGame()">PLAY AGAIN</button>
+  `;
+}
+
+game.addEventListener("click", () => {
+  if (!gameRunning) return;
+
+  lives--;
+  livesEl.textContent = lives;
+
+  if (lives <= 0) {
+    endGame();
+  }
+});
+</script>
+
+</body>
+</html>
+```
